@@ -1,10 +1,3 @@
-// Main.qml — Quickshell Screenshot Tool
-// Requires: grim, wl-copy (wl-clipboard)
-//
-// Add these Hyprland window rules to float the pill and remove its titlebar:
-//   windowrulev2 = float, title:^(Screenshot)$
-//   windowrulev2 = nodecoration, title:^(Screenshot)$
-
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
@@ -13,33 +6,28 @@ import QtQuick
 ShellRoot {
     id: root
 
-    // ── Global state ──────────────────────────────────────────────────────────
     property bool   selecting:    true
     property bool   confirmed:    false
-    property real   selX:         0
-    property real   selY:         0
-    property real   selW:         0
-    property real   selH:         0
-    property int    shotCount:    0
+    property real   selX:          0
+    property real   selY:          0
+    property real   selW:          0
+    property real   selH:          0
+    property int    shotCount:     0
     property string tmpPath:      "/tmp/qs_screenshot_preview_0.png"
     property bool   previewReady: false
     property string statusMsg:    ""
-    property bool   statusOk:     true
+    property bool   statusOk:      true
 
-    // grim geometry format: "X,Y WxH"
     property string grimGeo:
         Math.round(selX) + "," + Math.round(selY) +
         " " + Math.round(selW) + "x" + Math.round(selH)
 
-    // =========================================================================
-    // PHASE 1 — Full-screen overlay + drag-to-select
-    // =========================================================================
     PanelWindow {
         id: overlayWindow
         screen:  Quickshell.screens[0]
         visible: root.selecting
         color:   "transparent"
-        WlrLayershell.layer:         WlrLayer.Overlay
+        WlrLayershell.layer:          WlrLayer.Overlay
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
         WlrLayershell.exclusiveZone: -1
         anchors { top: true; bottom: true; left: true; right: true }
@@ -153,10 +141,6 @@ ShellRoot {
         }
     }
 
-    // =========================================================================
-    // PHASE 2 — Floating preview pill (FloatingWindow = normal toplevel,
-    // only occupies its own area so background apps stay fully interactive)
-    // =========================================================================
     FloatingWindow {
         id: pillWindow
         visible: root.confirmed
@@ -175,12 +159,11 @@ ShellRoot {
             Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
             Behavior on scale   { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
-            // Shadow
             Rectangle {
                 x: 4; y: 14; width: parent.width; height: parent.height
                 radius: 18; color: "#88000000"
             }
-            // Card
+
             Rectangle {
                 anchors.fill: parent
                 radius: 16
@@ -188,7 +171,6 @@ ShellRoot {
                 border.color: "#50807d74"; border.width: 1
             }
 
-            // ── Title bar ─────────────────────────────────────────────────────
             Item {
                 id: titleBar
                 anchors { top: parent.top; left: parent.left; right: parent.right }
@@ -218,7 +200,6 @@ ShellRoot {
                 }
             }
 
-            // ── Thumbnail ─────────────────────────────────────────────────────
             readonly property real thumbW: width  - 40
             readonly property real thumbH: height - titleBar.height - 8 - 72
 
@@ -232,10 +213,10 @@ ShellRoot {
                     id: preview
                     anchors.fill: parent
                     fillMode:     Image.PreserveAspectFit
-                    smooth:       true
-                    cache:        false
+                    smooth:        true
+                    cache:         false
                     asynchronous: true
-                    source:       ""
+                    source:        ""
 
                     Connections {
                         target: root
@@ -264,7 +245,6 @@ ShellRoot {
                 }
             }
 
-            // ── Toast ─────────────────────────────────────────────────────────
             Rectangle {
                 anchors { bottom: btnRow.top; bottomMargin: 6; horizontalCenter: parent.horizontalCenter }
                 visible: root.statusMsg !== ""
@@ -279,7 +259,6 @@ ShellRoot {
                 }
             }
 
-            // ── Buttons ───────────────────────────────────────────────────────
             Row {
                 id: btnRow
                 anchors { bottom: parent.bottom; bottomMargin: 16; horizontalCenter: parent.horizontalCenter }
@@ -296,18 +275,15 @@ ShellRoot {
             }
 
             Keys.onEscapePressed: Qt.quit()
-        } // pill
+        }
 
         Timer { id: clearTimer; interval: 3500; onTriggered: root.statusMsg = "" }
         Process { id: copyProc; command: ["sh", "-c", "wl-copy < \"" + root.tmpPath + "\""] }
         Process { id: saveProc; command: ["sh", "-c",
             "mkdir -p \"$HOME/Pictures/Screenshots\" && cp \"" + root.tmpPath + "\" " +
             "\"$HOME/Pictures/Screenshots/$(date +%s).png\""] }
-    } // pillWindow
+    }
 
-    // =========================================================================
-    // Shared components
-    // =========================================================================
     component SsButton: Rectangle {
         id: btn
         property string label:     "Action"
